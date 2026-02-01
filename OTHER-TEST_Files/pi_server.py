@@ -1,32 +1,23 @@
-import socket
+import serial, time
 
-# Bluetooth configuration
-server_address = "00:00:00:00:00:00" # Listens on all available adapters
-port = 1 # Standard RFCOMM port
+phone = serial.Serial('/dev/rfcomm0', baudrate=115200, timeout=0.1)
+pico  = serial.Serial('/dev/ttyS0', baudrate=115200, timeout=0.1)
 
-# Create the Bluetooth socket
-server_sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+while True:
+    if phone.in_waiting > 0:
+        #phonemsg = phone.readline().decode('utf-8', 'ignore').strip()
+        #if phonemsg == 'pingfromphone':
+        #    pico.write(b'pingfromphone\n')
+        msg = phone.read(phone.in_waiting).decode('utf-8', 'ignore').strip()
+        print(f"phone sent {msg}") #debug print
+        print("Forwarding to pico...")
+        pico.write((msg+'\n').encode())
+    if pico.in_waiting > 0:        
+        #picomsg = pico.readline().decode('utf-8').strip()
+        #if picomsg == 'pongfrompico':
+        #    phone.write(b'pongfrompico\r\n')
+        msg = pico.read(pico.in_waiting).decode('utf-8', 'ignore').strip()
+        print(f"Pico sent {msg}") #debug print
+        phone.write((msg+'\n').encode())
 
-try:
-    server_sock.bind((server_address, port))
-    server_sock.listen(1)
-    
-    print("Waiting for connection from PC...")
-    client_sock, client_info = server_sock.accept()
-    print(f"Accepted connection from {client_info}")
-
-    # Receive data
-    data = client_sock.recv(1024)
-    print(f"Received: {data.decode('utf-8')}")
-
-    # Send response
-    response = "Hello from Raspberry Pi!"
-    client_sock.send(response.encode('utf-8'))
-    print(f"Sent: {response}")
-
-except Exception as e:
-    print(f"Error: {e}")
-
-finally:
-    client_sock.close()
-    server_sock.close()
+    time.sleep(0.05)
