@@ -1,0 +1,3 @@
+[submodule "FLUTTER_Files/miku_flutter"]
+	path = FLUTTER_Files/miku_flutter
+	url = https://github.com/HexSK/miku_flutter
